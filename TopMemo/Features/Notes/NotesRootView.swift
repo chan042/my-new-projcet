@@ -1,0 +1,64 @@
+import SwiftUI
+
+struct NotesRootView: View {
+    @ObservedObject var viewModel: NotesViewModel
+    let closePopover: () -> Void
+
+    var body: some View {
+        ZStack {
+            AppTheme.background
+                .ignoresSafeArea()
+
+            Group {
+                switch viewModel.route {
+                case .memoList:
+                    NotesListView(viewModel: viewModel)
+                case .emptyComposer, .editor:
+                    MemoEditorView(viewModel: viewModel, closePopover: closePopover)
+                }
+            }
+            .padding(12)
+        }
+        .frame(width: AppTheme.popoverSize.width, height: AppTheme.popoverSize.height)
+        .alert(item: $viewModel.activeAlert, content: alert)
+    }
+
+    private func alert(for alert: NotesAlert) -> Alert {
+        switch alert {
+        case .discardChanges:
+            return Alert(
+                title: Text("변경 사항을 버릴까요?"),
+                message: Text("저장하지 않은 내용은 사라집니다."),
+                primaryButton: .destructive(Text("버리기")) {
+                    viewModel.discardChangesAndGoBack(closePopover: closePopover)
+                },
+                secondaryButton: .cancel {
+                    viewModel.clearAlert()
+                }
+            )
+        case .deleteMemo:
+            return Alert(
+                title: Text("메모를 삭제할까요?"),
+                message: Text(
+                    viewModel.isEditingExistingMemo
+                        ? "삭제한 메모는 되돌릴 수 없습니다."
+                        : "작성 중인 내용이 사라집니다."
+                ),
+                primaryButton: .destructive(Text("삭제")) {
+                    viewModel.deleteCurrent()
+                },
+                secondaryButton: .cancel {
+                    viewModel.clearAlert()
+                }
+            )
+        case .error(let message):
+            return Alert(
+                title: Text("저장 오류"),
+                message: Text(message),
+                dismissButton: .default(Text("확인")) {
+                    viewModel.clearAlert()
+                }
+            )
+        }
+    }
+}
