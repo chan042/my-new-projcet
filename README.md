@@ -57,15 +57,6 @@ zsh Distribution/make-dmg.sh
 
 - SwiftUI
 - AppKit
-- 로컬 JSON 저장 방식
-- 셸 기반 `.app` / `.dmg` 빌드 스크립트
-
-## 프로젝트 구조
-
-- `TopMemo/`: 앱 소스 코드
-- `Distribution/`: 앱 빌드 및 `.dmg` 패키징 스크립트
-- `image/`: 앱 아이콘 리소스
-- `docs/`: 개발 문서
 
 ## 참고
 
