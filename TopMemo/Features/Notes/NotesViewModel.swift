@@ -69,13 +69,19 @@ final class NotesViewModel: ObservableObject {
 
     func handlePopoverOpened() {
         activeAlert = nil
+
+        if hasResumableEditorSession {
+            requestFocus()
+            return
+        }
+
         openDefaultComposer()
     }
 
     func handleShortcutTriggered() {
         activeAlert = nil
 
-        if isDirty {
+        if hasResumableEditorSession {
             requestFocus()
             return
         }
@@ -190,17 +196,11 @@ final class NotesViewModel: ObservableObject {
 
     func deleteCurrent() {
         activeAlert = nil
+        deleteMemo(withID: draft.memoID)
+    }
 
-        if let memoID = draft.memoID {
-            notes.removeAll { $0.id == memoID }
-            persistNotes()
-        }
-
-        if notes.isEmpty {
-            prepareEmptyComposer()
-        } else {
-            route = .memoList
-        }
+    func delete(_ memo: MemoItem) {
+        deleteMemo(withID: memo.id)
     }
 
     func deleteAllMemos() {
@@ -312,13 +312,64 @@ final class NotesViewModel: ObservableObject {
             draft = .from(memo)
             originalDraft = draft
         } else {
-            draft = .empty
-            originalDraft = draft
+            resetDraft()
         }
     }
 
     private func requestFocus() {
         focusToken = UUID()
+    }
+
+    private var hasResumableEditorSession: Bool {
+        switch route {
+        case .emptyComposer, .editor:
+            return true
+        case .memoList, .settings:
+            return false
+        }
+    }
+
+    private func resetDraft() {
+        colorSelectionRequest = nil
+        draft = .empty
+        originalDraft = draft
+    }
+
+    private func deleteMemo(withID memoID: UUID?) {
+        guard let memoID else {
+            resetDraft()
+
+            if notes.isEmpty {
+                prepareEmptyComposer()
+            } else {
+                route = .memoList
+            }
+            return
+        }
+
+        let previousNotes = notes
+        let updatedNotes = Self.sorted(notes.filter { $0.id != memoID })
+
+        do {
+            try store.save(updatedNotes)
+            notes = updatedNotes
+
+            if draft.memoID == memoID {
+                resetDraft()
+            }
+
+            if notes.isEmpty {
+                prepareEmptyComposer()
+            } else {
+                route = .memoList
+            }
+        } catch {
+            notes = previousNotes
+            activeAlert = .error(
+                title: "저장 오류",
+                message: error.localizedDescription
+            )
+        }
     }
 
     private func persistNotes() {

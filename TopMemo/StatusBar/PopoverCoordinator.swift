@@ -8,6 +8,8 @@ final class PopoverCoordinator: NSObject, NSPopoverDelegate {
     private let shortcutController: GlobalShortcutController
     private let popover = NSPopover()
     private var eventMonitor: Any?
+    private var isClosingPopover = false
+    private var shouldReopenAfterClose = false
     private lazy var hostingController = NSHostingController(
         rootView: NotesRootView(
             viewModel: viewModel,
@@ -52,19 +54,37 @@ final class PopoverCoordinator: NSObject, NSPopoverDelegate {
     }
 
     func showNewMemoFromShortcut() {
-        viewModel.handleShortcutTriggered()
-
-        if popover.isShown {
-            NSApp.activate(ignoringOtherApps: true)
-            hostingController.view.window?.makeKey()
+        if isClosingPopover {
+            shouldReopenAfterClose = true
             return
         }
 
+        if popover.isShown {
+            closePopover()
+            return
+        }
+
+        viewModel.handleShortcutTriggered()
         presentPopover()
     }
 
     func popoverDidClose(_ notification: Notification) {
+        isClosingPopover = false
         stopEventMonitor()
+
+        guard shouldReopenAfterClose else {
+            return
+        }
+
+        shouldReopenAfterClose = false
+        DispatchQueue.main.async { [weak self] in
+            guard let self else {
+                return
+            }
+
+            self.viewModel.handleShortcutTriggered()
+            self.presentPopover()
+        }
     }
 
     private func configurePopover() {
@@ -101,6 +121,13 @@ final class PopoverCoordinator: NSObject, NSPopoverDelegate {
     }
 
     private func closePopover() {
+        shouldReopenAfterClose = false
+
+        guard popover.isShown else {
+            return
+        }
+
+        isClosingPopover = true
         popover.performClose(nil)
         stopEventMonitor()
     }

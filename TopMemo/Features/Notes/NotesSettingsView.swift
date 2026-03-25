@@ -9,16 +9,8 @@ struct NotesSettingsView: View {
 
     var body: some View {
         ZStack {
-            // Refined Backdrop
             AppTheme.background
                 .ignoresSafeArea()
-            
-            // Subtle ambient glow
-            Circle()
-                .fill(AppTheme.actionYellow.opacity(0.12))
-                .frame(width: 300, height: 300)
-                .blur(radius: 50)
-                .offset(x: 150, y: -200)
 
             VStack(spacing: 0) {
                 header
@@ -191,24 +183,18 @@ struct NotesSettingsView: View {
     }
 
     private var dangerZoneCard: some View {
-        Button {
-            viewModel.requestDeleteAllMemos()
-        } label: {
-            Text("모든 메모 삭제")
-                .font(.system(size: 14, weight: .bold))
-                .frame(maxWidth: .infinity)
-                .multilineTextAlignment(.center)
-                .foregroundColor(viewModel.hasNotes ? .red : AppTheme.subduedText)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
-                .background(Color.red.opacity(0.1))
-                .clipShape(RoundedRectangle(cornerRadius: 14))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14)
-                        .stroke(Color.red.opacity(0.25), lineWidth: 1)
-                )
+        HStack {
+            Spacer()
+            Button {
+                viewModel.requestDeleteAllMemos()
+            } label: {
+                Text("모든 메모 삭제")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundColor(viewModel.hasNotes ? .red : AppTheme.subduedText)
+            }
+            .buttonStyle(.plain)
+            Spacer()
         }
-        .buttonStyle(.plain)
         .disabled(!viewModel.hasNotes)
         .opacity(viewModel.hasNotes ? 1.0 : 0.5)
     }
@@ -254,7 +240,7 @@ struct NotesSettingsView: View {
         .clipShape(RoundedRectangle(cornerRadius: 22))
         .overlay(
             RoundedRectangle(cornerRadius: 22)
-                .stroke(isDanger ? Color.red.opacity(0.3) : AppTheme.subtleBorder, lineWidth: 1)
+                .stroke(isDanger ? Color.red.opacity(0.3) : AppTheme.memoRowBorder, lineWidth: 1)
         )
     }
 

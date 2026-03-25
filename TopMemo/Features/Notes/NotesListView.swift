@@ -25,6 +25,9 @@ struct NotesListView: View {
                                 },
                                 onCopy: {
                                     copyMemo(memo)
+                                },
+                                onDelete: {
+                                    viewModel.delete(memo)
                                 }
                             )
                         }
@@ -136,6 +139,7 @@ private struct MemoRowView: View {
     let isCopied: Bool
     let onOpen: () -> Void
     let onCopy: () -> Void
+    let onDelete: () -> Void
 
     private var previewColor: Color {
         memo.preferredColor == .black ? .primary : memo.preferredColor.color
@@ -154,17 +158,29 @@ private struct MemoRowView: View {
             }
             .buttonStyle(.plain)
 
-            Button(action: onCopy) {
-                Image(systemName: "doc.on.doc")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(AppTheme.subduedText.opacity(0.55))
-                    .frame(width: 24, height: 24)
-                    .contentShape(Rectangle())
-                    .scaleEffect(isCopied ? 1.32 : 1.0)
-                    .animation(.spring(response: 0.2, dampingFraction: 0.45), value: isCopied)
+            HStack(spacing: 2) {
+                Button(action: onCopy) {
+                    Image(systemName: "doc.on.doc")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(AppTheme.subduedText.opacity(0.55))
+                        .frame(width: 24, height: 24)
+                        .contentShape(Rectangle())
+                        .scaleEffect(isCopied ? 1.32 : 1.0)
+                        .animation(.spring(response: 0.2, dampingFraction: 0.45), value: isCopied)
+                }
+                .buttonStyle(.plain)
+                .help("전체 메모 복사")
+
+                Button(role: .destructive, action: onDelete) {
+                    Image(systemName: "trash")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(Color(nsColor: .systemRed).opacity(0.75))
+                        .frame(width: 24, height: 24)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .help("메모 삭제")
             }
-            .buttonStyle(.plain)
-            .help("전체 메모 복사")
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 12)
